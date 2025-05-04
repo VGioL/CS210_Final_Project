@@ -2,24 +2,71 @@
 #include <fstream>
 #include <sstream>
 #include <deque>
+#include <cstdlib>
 using namespace std;
 
-// returns population
-int searchCSV(string countryCode, string cityName, deque<string> cache)
+string cacheDecision;
+deque<pair<string, int>> cache;
+
+
+void handleCacheFull()
 {
-    string line; // ???
-    string word; // ???
+    // Least Frequently Used
+    if (cacheDecision == "1")
+    {
+        deque<pair<string, int>>::iterator lowestFreq;
+        lowestFreq->second = INT_MAX;
+        for (deque<pair<string, int>>::iterator cached = cache.begin(); cached != cache.end();) // begin = front of deque, so oldest
+        {
+            if (cached->second < lowestFreq->second)
+            {
+                lowestFreq = cached;
+            }
+        }
+        cache.erase(lowestFreq);
+    }
+
+    // First-in First-out
+    if (cacheDecision == "2")
+    {
+        cache.pop_front();
+    }
+
+    // Random Replacement
+    if (cacheDecision == "3")
+    {
+        // adapting some code for using rng from cppreference.com https://en.cppreference.com/w/cpp/numeric/random/rand
+        srand(time({})); // uses current time for the rng seed
+        unsigned random = rand();
+        unsigned offset = (random % 10);
+
+        cache.erase(cache.begin() + offset); // random int from 0-9
+    }
+}
+
+
+// returns population
+int searchCSV(const string& countryCode, const string& cityName)
+{
+    string line;
+    string word;
 
     // check cache
-    for (deque<string>::iterator cached = cache.begin(); cached != cache.end();)
+    for (deque<pair<string, int>>::iterator cached = cache.begin(); cached != cache.end();)
     {
-        stringstream ss(*cached);
+        stringstream ss(cached->first);
         getline(ss, word, ',');
-        if(word == countryCode) {
+        if(word == countryCode)
+        {
             getline(ss, word, ',');
-            if (word == cityName) {
+            if (word == cityName)
+            {
+                // handle cache hit
+                pair<string, int> temp = *cached;
                 cache.erase(cached);
-                cache.push_back(*cached); // add city info to cache
+                temp.second++; // increase frequency count
+                cache.push_back(temp); // move city info to front of cache
+
                 getline(ss, word, ',');
                 return stoi(word); // string to int
             }
@@ -43,11 +90,12 @@ int searchCSV(string countryCode, string cityName, deque<string> cache)
             getline(ss, word, ',');
             if(word == cityName)
             {
-                if (cache.size() == 10)
+                // handle cache at capacity
+                if(cache.size() == 10)
                 {
-                    cache.pop_front();
+                    handleCacheFull();
                 }
-                cache.push_back(line); // add city info to cache
+                cache.emplace_back(line, 1); // add city info to cache
                 getline(ss, word, ',');
                 file.close();
                 return stoi(word); // string to int
@@ -59,13 +107,13 @@ int searchCSV(string countryCode, string cityName, deque<string> cache)
 }
 
 
+
+
 int main() {
      // file is re-opened and closed for every search. is this the better option?
-    deque<string> cache;
     cout << "Welcome to the world city search script. Type -1 at any prompt to end program." << endl;
     cout << "--------------------" << endl;
     bool success = false;
-    string cacheDecision;
     while (!success)
     {
         cout << "Choose one of the following cache options by typing the corresponding number:" << endl
@@ -84,6 +132,7 @@ int main() {
         else
         {
             success = true;
+            cout << "--------------------" << endl;
         }
 
 
@@ -92,7 +141,7 @@ int main() {
     while(true)
     {
         cout << "Please enter a country code:";
-        string inputCountryCode; // ???
+        string inputCountryCode;
         cin >> inputCountryCode;
         if (inputCountryCode == "-1")
         {
@@ -110,16 +159,19 @@ int main() {
             return 0;
         }
 
-        int pop = searchCSV(inputCountryCode, inputCityName, cache);
+        int pop = searchCSV(inputCountryCode, inputCityName);
         if (pop < 0)
         {
-            cout << "City not found. Try again." << endl << endl;
-            cout << "your country code: '" << inputCountryCode << "'" << endl;
-            cout << "your city name: '" << inputCityName << "'"  << endl;
+            cout << "City not found. Try again." << endl;
+            cout << "      Your country code: '" << inputCountryCode << "'" << endl;
+            cout << "      Your city name: '" << inputCityName << "'"  << endl;
+            cout << endl;
         }
         else
         {
-            cout << "Population: " << pop << endl << endl;
+            cout << "Population: " << pop << endl;
+            cout << "frequency: " << cache.front().second << endl;
+            cout << endl;
         }
     }
 }
