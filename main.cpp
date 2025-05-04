@@ -64,6 +64,30 @@ int main() {
     deque<string> cache;
     cout << "Welcome to the world city search script. Type -1 at any prompt to end program." << endl;
     cout << "--------------------" << endl;
+    bool success = false;
+    string cacheDecision;
+    while (!success)
+    {
+        cout << "Choose one of the following cache options by typing the corresponding number:" << endl
+        << "1: LFU (Least Frequently Used)" << endl
+        << "2: FIFO (First-In, First-out)" << endl
+        << "3: Random Replacement" << endl;
+        cin >> cacheDecision;
+        if (cacheDecision == "-1")
+        {
+            return 0;
+        }
+        if (cacheDecision != "1" && cacheDecision != "2" && cacheDecision != "3")
+        {
+            cout << "Invalid input; please type -1, 1, 2, or 3." << endl;
+        }
+        else
+        {
+            success = true;
+        }
+
+
+    }
 
     while(true)
     {
