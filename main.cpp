@@ -14,16 +14,20 @@ void handleCacheFull()
     // Least Frequently Used
     if (cacheDecision == "1")
     {
-        deque<pair<string, int>>::iterator lowestFreq;
-        lowestFreq->second = INT_MAX;
-        for (deque<pair<string, int>>::iterator cached = cache.begin(); cached != cache.end();) // begin = front of deque, so oldest
+        cout << "test2" << endl;
+        deque<pair<string, int>>::iterator lowestFreqIterator;
+        int lowestFreq = INT_MAX;
+        for (deque<pair<string, int>>::iterator cached = cache.end() - 1; cached >= cache.begin(); cached--) // end() = front of deque, so oldest
         {
-            if (cached->second < lowestFreq->second)
+            cout << "test3" << endl;
+            if (cached->second < lowestFreq)
             {
-                lowestFreq = cached;
+                lowestFreq = cached->second;
+                lowestFreqIterator = cached;
+                cout << "test4" << endl;
             }
         }
-        cache.erase(lowestFreq);
+        cache.erase(lowestFreqIterator);
     }
 
     // First-in First-out
@@ -52,8 +56,9 @@ int searchCSV(const string& countryCode, const string& cityName)
     string word;
 
     // check cache
-    for (deque<pair<string, int>>::iterator cached = cache.begin(); cached != cache.end();)
+    for (deque<pair<string, int>>::iterator cached = cache.begin(); cached < cache.end(); cached++)
     {
+        cout << "test1" << endl;
         stringstream ss(cached->first);
         getline(ss, word, ',');
         if(word == countryCode)
@@ -65,7 +70,7 @@ int searchCSV(const string& countryCode, const string& cityName)
                 pair<string, int> temp = *cached;
                 cache.erase(cached);
                 temp.second++; // increase frequency count
-                cache.push_back(temp); // move city info to front of cache
+                cache.emplace_back(temp); // move city info to back of cache
 
                 getline(ss, word, ',');
                 return stoi(word); // string to int
@@ -149,7 +154,7 @@ int main() {
         }
 
         cout << "Please enter a city name:";
-        string inputCityName; // ???
+        string inputCityName;
         cin >> ws;
         getline(cin, inputCityName);
 
@@ -170,8 +175,12 @@ int main() {
         else
         {
             cout << "Population: " << pop << endl;
-            cout << "frequency: " << cache.front().second << endl;
-            cout << endl;
+            cout << "Current Cache: " << endl;
+            for (pair<string, int> cached : cache)
+            {
+                cout << cached.first << " | frequency of " << cached.second << endl;
+            }
+            cout << endl << endl;
         }
     }
 }
