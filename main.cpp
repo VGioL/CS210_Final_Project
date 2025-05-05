@@ -3,25 +3,51 @@
 #include <sstream>
 #include <deque>
 #include <cstdlib>
+#include <unordered_map>
+#include <string>
 using namespace std;
 
 string cacheDecision;
 deque<pair<string, int>> cache;
 
-class TrieNode
-{
-public:
-    string countryCode;
-    string cityName;
-    int population = -1;
+struct TrieNode {
+    bool isEndOfWord;
+    unordered_map<char, TrieNode*> children;
+
+    TrieNode() : isEndOfWord(false) {}
 };
 
-class Trie
-{
-public:
-    void insert(TrieNode node)
-    {
+class Trie {
+private:
+    TrieNode *root;
 
+public:
+    Trie() {
+        root = new TrieNode();
+    }
+
+    void insert(const string& cc, const string& city) {
+        string name = cc + city;
+        TrieNode* node = root;
+        for (char c : name) {
+            c = tolower(c); // Case-insensitive
+            if (node->children.count(c) == 0)
+                node->children[c] = new TrieNode();
+            node = node->children[c];
+        }
+        node->isEndOfWord = true;
+    }
+
+    bool search(const string& cc, const string& city) {
+        string name = cc + city;
+        TrieNode* node = root;
+        for (char c : name) {
+            c = tolower(c);
+            if (node->children.count(c) == 0)
+                return false;
+            node = node->children[c];
+        }
+        return node->isEndOfWord;
     }
 };
 
