@@ -14,17 +14,14 @@ void handleCacheFull()
     // Least Frequently Used
     if (cacheDecision == "1")
     {
-        cout << "test2" << endl;
         deque<pair<string, int>>::iterator lowestFreqIterator;
         int lowestFreq = INT_MAX;
-        for (deque<pair<string, int>>::iterator cached = cache.end() - 1; cached >= cache.begin(); cached--) // end() = front of deque, so oldest
+        for (deque<pair<string, int>>::iterator cached = cache.begin(); cached < cache.end(); cached++) // begin() = front of deque, so oldest
         {
-            cout << "test3" << endl;
             if (cached->second < lowestFreq)
             {
                 lowestFreq = cached->second;
                 lowestFreqIterator = cached;
-                cout << "test4" << endl;
             }
         }
         cache.erase(lowestFreqIterator);
@@ -58,7 +55,6 @@ int searchCSV(const string& countryCode, const string& cityName)
     // check cache
     for (deque<pair<string, int>>::iterator cached = cache.begin(); cached < cache.end(); cached++)
     {
-        cout << "test1" << endl;
         stringstream ss(cached->first);
         getline(ss, word, ',');
         if(word == countryCode)
@@ -175,11 +171,11 @@ int main() {
         else
         {
             cout << "Population: " << pop << endl;
-            cout << "Current Cache: " << endl;
-            for (pair<string, int> cached : cache)
-            {
-                cout << cached.first << " | frequency of " << cached.second << endl;
-            }
+//            cout << "Current Cache: " << endl;
+//            for (pair<string, int> cached : cache)
+//            {
+//                cout << cached.first << " | frequency of " << cached.second << endl;
+//            }
             cout << endl << endl;
         }
     }
