@@ -8,6 +8,22 @@ using namespace std;
 string cacheDecision;
 deque<pair<string, int>> cache;
 
+class TrieNode
+{
+public:
+    string countryCode;
+    string cityName;
+    int population = -1;
+};
+
+class Trie
+{
+public:
+    void insert(TrieNode node)
+    {
+
+    }
+};
 
 void handleCacheFull()
 {
@@ -75,12 +91,6 @@ int searchCSV(const string& countryCode, const string& cityName)
 
     }
 
-    ifstream file("world_cities.csv");
-    if (!file.is_open()) {
-        cerr << "Error: Could not open world_cities.csv" << endl;
-        return -1;
-    }
-
     // linear search
     while (getline(file, line))
     {
@@ -98,12 +108,11 @@ int searchCSV(const string& countryCode, const string& cityName)
                 }
                 cache.emplace_back(line, 1); // add city info to cache
                 getline(ss, word, ',');
-                file.close();
+
                 return stoi(word); // string to int
             }
         }
     }
-    file.close();
     return -1;
 }
 
@@ -111,7 +120,30 @@ int searchCSV(const string& countryCode, const string& cityName)
 
 
 int main() {
-     // file is re-opened and closed for every search. is this the better option?
+    // read csv into trie
+    ifstream file("world_cities.csv");
+    if (!file.is_open()) {
+        cerr << "Error: Could not open world_cities.csv" << endl;
+        return -1;
+    }
+    Trie trie;
+    string line;
+    while (getline(file, line))
+    {
+        TrieNode newNode;
+        stringstream ss(line); // turn string into input stream
+        getline(ss, newNode.countryCode, ',');
+        getline(ss, newNode.cityName, ',');
+        string temp;
+        getline(ss, temp, ',');
+        newNode.population = stoi(temp);
+        trie.insert(newNode);
+    }
+
+    file.close();
+
+
+    // user interface
     cout << "Welcome to the world city search script. Type -1 at any prompt to end program." << endl;
     cout << "--------------------" << endl;
     bool success = false;
