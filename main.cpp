@@ -10,47 +10,6 @@ using namespace std;
 string cacheDecision;
 deque<pair<string, int>> cache;
 
-struct TrieNode {
-    bool isEndOfWord;
-    unordered_map<char, TrieNode*> children;
-
-    TrieNode() : isEndOfWord(false) {}
-};
-
-class Trie {
-private:
-    TrieNode *root;
-
-public:
-    Trie() {
-        root = new TrieNode();
-    }
-
-    void insert(const string& cc, const string& city) {
-        string name = cc + city;
-        TrieNode* node = root;
-        for (char c : name) {
-            c = tolower(c); // Case-insensitive
-            if (node->children.count(c) == 0)
-                node->children[c] = new TrieNode();
-            node = node->children[c];
-        }
-        node->isEndOfWord = true;
-    }
-
-    bool search(const string& cc, const string& city) {
-        string name = cc + city;
-        TrieNode* node = root;
-        for (char c : name) {
-            c = tolower(c);
-            if (node->children.count(c) == 0)
-                return false;
-            node = node->children[c];
-        }
-        return node->isEndOfWord;
-    }
-};
-
 void handleCacheFull()
 {
     // Least Frequently Used
@@ -88,61 +47,82 @@ void handleCacheFull()
 }
 
 
-// returns population
-int searchCSV(const string& countryCode, const string& cityName)
-{
-    string line;
-    string word;
+struct TrieNode {
+    bool isEndOfWord;
+    unordered_map<char, TrieNode*> children;
+    int population;
 
-    // check cache
-    for (deque<pair<string, int>>::iterator cached = cache.begin(); cached < cache.end(); cached++)
-    {
-        stringstream ss(cached->first);
-        getline(ss, word, ',');
-        if(word == countryCode)
-        {
-            getline(ss, word, ',');
-            if (word == cityName)
-            {
-                // handle cache hit
-                pair<string, int> temp = *cached;
-                cache.erase(cached);
-                temp.second++; // increase frequency count
-                cache.emplace_back(temp); // move city info to back of cache
+    TrieNode() : isEndOfWord(false), population(-1) {}
+};
 
-                getline(ss, word, ',');
-                return stoi(word); // string to int
-            }
-        }
+class Trie {
+private:
+    TrieNode *root;
 
+public:
+    Trie() {
+        root = new TrieNode();
     }
 
-    // linear search
-    while (getline(file, line))
+    void insert(const string& cc, const string& city, const int& pop)
     {
-        stringstream ss(line); // turn string into input stream
-        getline(ss, word, ',');
-        if(word == countryCode)
+        string name = cc + city;
+        TrieNode* node = root;
+        for (char c : name) {
+            c = tolower(c); // Case-insensitive
+            if (node->children.count(c) == 0)
+                node->children[c] = new TrieNode();
+            node = node->children[c];
+        }
+        node->population = pop;
+        node->isEndOfWord = true;
+    }
+
+    int search(const string& cc, const string& city)
+    {
+        // check cache
+        for (deque<pair<string, int>>::iterator cached = cache.begin(); cached < cache.end(); cached++)
         {
+            string word;
+            stringstream ss(cached->first);
             getline(ss, word, ',');
-            if(word == cityName)
+            if(word == cc)
             {
-                // handle cache at capacity
-                if(cache.size() == 10)
+                getline(ss, word, ',');
+                if (word == city)
                 {
-                    handleCacheFull();
-                }
-                cache.emplace_back(line, 1); // add city info to cache
-                getline(ss, word, ',');
+                    // handle cache hit
+                    pair<string, int> temp = *cached;
+                    cache.erase(cached);
+                    temp.second++; // increase frequency count
+                    cache.emplace_back(temp); // move city info to back of cache
 
-                return stoi(word); // string to int
+                    getline(ss, word, ',');
+                    return stoi(word); // string to int
+                }
             }
         }
+
+        string name = cc + city;
+        TrieNode* node = root;
+        for (char c : name) {
+            c = tolower(c);
+            if (node->children.count(c) == 0)
+                return -1; // not found
+            node = node->children[c];
+        }
+        if (node->isEndOfWord) // found (handles case where search starts going down a branch but stops at non-terminal node)
+        {
+            // handle cache at capacity
+            if(cache.size() == 10)
+            {
+                handleCacheFull();
+            }
+            cache.emplace_back(cc + "," + city + "," + to_string(node->population) + ".0", 1); // add city info to cache
+        }
+        return node->population; // will be -1 if not found
     }
-    return -1;
-}
-
-
+};
 
 
 int main() {
@@ -154,18 +134,19 @@ int main() {
     }
     Trie trie;
     string line;
+    getline(file, line); // discarding first line (which is just info)
     while (getline(file, line))
     {
-        TrieNode newNode;
+        string cc;
+        string city;
+        string pop;
         stringstream ss(line); // turn string into input stream
-        getline(ss, newNode.countryCode, ',');
-        getline(ss, newNode.cityName, ',');
-        string temp;
-        getline(ss, temp, ',');
-        newNode.population = stoi(temp);
-        trie.insert(newNode);
-    }
+        getline(ss, cc, ',');
+        getline(ss, city, ',');
+        getline(ss, pop, ',');
 
+        trie.insert(cc, city, stoi(pop));
+    }
     file.close();
 
 
@@ -218,7 +199,7 @@ int main() {
             return 0;
         }
 
-        int pop = searchCSV(inputCountryCode, inputCityName);
+        int pop = trie.search(inputCountryCode, inputCityName);
         if (pop < 0)
         {
             cout << "City not found. Try again." << endl;
@@ -229,11 +210,11 @@ int main() {
         else
         {
             cout << "Population: " << pop << endl;
-//            cout << "Current Cache: " << endl;
-//            for (pair<string, int> cached : cache)
-//            {
-//                cout << cached.first << " | frequency of " << cached.second << endl;
-//            }
+            cout << "Current Cache: " << endl;
+            for (pair<string, int> cached : cache)
+            {
+                cout << cached.first << " | frequency of " << cached.second << endl;
+            }
             cout << endl << endl;
         }
     }
