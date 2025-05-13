@@ -178,24 +178,32 @@ int main() {
 
     }
 
+    ifstream testscript("testscript.txt");
+    if (!testscript.is_open()) {
+        cerr << "Error: Could not open testscript.txt" << endl;
+        return -1;
+    }
+
     while(true)
     {
         cout << "Please enter a country code:";
         string inputCountryCode;
-        cin >> inputCountryCode;
+        testscript >> inputCountryCode;
         if (inputCountryCode == "-1")
         {
+            testscript.close();
             return 0;
         }
 
         cout << "Please enter a city name:";
         string inputCityName;
-        cin >> ws;
-        getline(cin, inputCityName);
+        testscript >> ws;
+        getline(testscript, inputCityName);
 
 
         if (inputCityName == "-1")
         {
+            testscript.close();
             return 0;
         }
 
