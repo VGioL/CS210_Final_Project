@@ -5,10 +5,13 @@
 #include <cstdlib>
 #include <unordered_map>
 #include <string>
+#include "timer.h"
 using namespace std;
 
 string cacheDecision;
 deque<pair<string, int>> cache;
+
+pair<int, int> cacheHitRate = {0,0}; // {searches, cache hits}
 
 void handleCacheFull()
 {
@@ -80,6 +83,7 @@ public:
 
     int search(const string& cc, const string& city)
     {
+        cacheHitRate.first ++;
         // check cache
         for (deque<pair<string, int>>::iterator cached = cache.begin(); cached < cache.end(); cached++)
         {
@@ -92,6 +96,7 @@ public:
                 if (word == city)
                 {
                     // handle cache hit
+                    cacheHitRate.second++;
                     pair<string, int> temp = *cached;
                     cache.erase(cached);
                     temp.second++; // increase frequency count
@@ -174,8 +179,6 @@ int main() {
             success = true;
             cout << "--------------------" << endl;
         }
-
-
     }
 
     ifstream testscript("testscript.txt");
@@ -184,22 +187,44 @@ int main() {
         return -1;
     }
 
+    Timer timer;
+    double aveDuration = 0;
+    double totalDuration = timer.get_time();
+    vector<double> durations;
+
     while(true)
     {
-        cout << "Please enter a country code:";
+//        cout << "Please enter a country code:";
         string inputCountryCode;
         testscript >> inputCountryCode;
         if (inputCountryCode == "-1")
         {
             testscript.close();
+
+            // get average of all recorded durations
+            for (double duration : durations)
+            {
+                aveDuration += duration;
+            }
+            aveDuration /= durations.size();
+
+            // get total duration
+            totalDuration = timer.get_time() - totalDuration;
+
+            // get cache hit rate ratio
+            double cacheHitRatio = double(cacheHitRate.second) / double(cacheHitRate.first);
+
+            cout << "total duration (ms): " << totalDuration << endl;
+            cout << "average lookup time (ms): " << aveDuration << endl;
+            cout << "cache hit rate: " << cacheHitRate.second << "hits to " << cacheHitRate.first << " searches. (" << cacheHitRatio << ")" << endl;
+
             return 0;
         }
 
-        cout << "Please enter a city name:";
+//        cout << "Please enter a city name:";
         string inputCityName;
         testscript >> ws;
         getline(testscript, inputCityName);
-
 
         if (inputCityName == "-1")
         {
@@ -207,7 +232,10 @@ int main() {
             return 0;
         }
 
+        double startDuration = timer.get_time();
         int pop = trie.search(inputCountryCode, inputCityName);
+        durations.push_back(timer.get_time() - startDuration);
+
         if (pop < 0)
         {
             cout << "City not found. Try again." << endl;
@@ -215,15 +243,15 @@ int main() {
             cout << "      Your city name: '" << inputCityName << "'"  << endl;
             cout << endl;
         }
-        else
-        {
-            cout << "Population: " << pop << endl;
-            cout << "Current Cache: " << endl;
-            for (pair<string, int> cached : cache)
-            {
-                cout << cached.first << " | frequency of " << cached.second << endl;
-            }
-            cout << endl << endl;
-        }
+//        else
+//        {
+//            cout << "Population: " << pop << endl;
+//            cout << "Current Cache: " << endl;
+//            for (pair<string, int> cached : cache)
+//            {
+//                cout << cached.first << " | frequency of " << cached.second << endl;
+//            }
+//            cout << endl << endl;
+//        }
     }
 }
