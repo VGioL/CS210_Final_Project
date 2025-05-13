@@ -29,13 +29,13 @@ int main()
 {
     // populate testscript.csv with cities to be searched
     ifstream world_cities("world_cities.csv");
-    ofstream testscriptCSV("testscript.csv");
+    ofstream testscript("testscript.txt");
     if (!world_cities.is_open()) {
         cerr << "Error: Could not open world_cities.csv" << endl;
         return 1;
     }
-    if (!testscriptCSV.is_open()) {
-        cerr << "Error: Could not open testscript.csv" << endl;
+    if (!testscript.is_open()) {
+        cerr << "Error: Could not open testscript.txt" << endl;
         return 1;
     }
 
@@ -46,15 +46,20 @@ int main()
     queue<string> frequentCities;
 
     while (getline(world_cities, line)) {
+        stringstream ss(line); // turn string into input stream, so that i can get country code and city name from current line
         string foundCountry;
-        stringstream ss(line); // turn string into input stream, so that i can ...
-        getline(ss, foundCountry, ','); // get country code from current line
+        string foundCity;
+        string waste;
+        getline(ss, foundCountry, ',');
+        getline(ss, foundCity, ',');
 
         if (foundCountry != currentCountry) // new country code
         {
             pattern = 0;
             currentCountry = foundCountry;
-            testscriptCSV << line << endl << line << endl; // adding twice for the first city in country
+
+            // adding twice for the first city in country
+            testscript << foundCountry << endl << foundCity << endl << foundCountry << endl << foundCity << endl;
 
             // setting up to bring back older cities
             frequentCities.push(line);
@@ -64,14 +69,21 @@ int main()
             pattern++;
             if (pattern < 3) // only want to add the next two cities in the country
             {
-                testscriptCSV << line << endl;
+                testscript << foundCountry << endl << foundCity << endl;
             }
             else if (pattern < 5) // for the next two cities in a country which wouldn't be added
             {
                 // bring back older cities
                 if (!frequentCities.empty())
                 {
-                    testscriptCSV << frequentCities.front() << endl;
+                    stringstream frequentSS(frequentCities.front());
+                    string freqFoundCountry;
+                    string freqFoundCity;
+                    getline(frequentSS, freqFoundCountry, ',');
+                    getline(frequentSS, freqFoundCity, ',');
+
+                    testscript << freqFoundCountry << endl << freqFoundCity << endl;
+
                     // create rotation of cities so that it's not just the same country's first city being repeated 2 more times
                     frequentCities.push(frequentCities.front());
                     frequentCities.pop();
@@ -80,6 +92,7 @@ int main()
 
         }
     }
+    testscript << "-1" << endl;
     world_cities.close();
-    testscriptCSV.close();
+    testscript.close();
 }
